@@ -142,9 +142,12 @@ h1 { margin: 0; color: var(--green-dark); font-family: Georgia, "Times New Roman
 .map-column { position:sticky; top:92px; }
 .map-shell { height:min(68vh,680px); min-height:460px; overflow:hidden; border-radius:24px; border:5px solid white; box-shadow:var(--shadow); position:relative; }
 .map-shell .leaflet-container { width:100%; height:100%; }
-.map-pin { width:32px!important; height:32px!important; margin-left:-16px!important; margin-top:-16px!important; display:grid!important; place-items:center; border-radius:50% 50% 50% 8px; transform:rotate(-45deg); background:var(--green); color:white; border:3px solid white; box-shadow:0 3px 10px rgba(0,0,0,.25); font-weight:900; }
-.map-pin b { transform:rotate(45deg); }.map-pin--selected { background:var(--blue); scale:1.15; }
-.map-report { position:absolute; z-index:500; bottom:23px; right:10px; padding:7px 10px; border-radius:8px; background:rgba(255,255,255,.92); font-size:11px; }
+.map-pin { width:32px!important; height:32px!important; margin-left:-16px!important; margin-top:-16px!important; display:grid!important; place-items:center; border-radius:50% 50% 50% 8px; transform:rotate(-45deg); background:var(--yellow); color:var(--green-dark); border:3px solid white; box-shadow:0 4px 13px rgba(0,0,0,.48); font-weight:900; }
+.map-pin b { transform:rotate(45deg); }.map-pin--selected { background:var(--coral); color:white; scale:1.15; }
+.map-report { position:absolute; z-index:500; top:10px; right:10px; padding:7px 10px; border-radius:8px; color:var(--green-dark); background:rgba(255,255,255,.94); font-size:11px; font-weight:750; box-shadow:0 3px 10px rgba(0,0,0,.18); }
+.map-shell .leaflet-popup-content a { display:inline-block; margin-top:5px; font-weight:800; }
+.map-shell .leaflet-control-attribution a { color:#004a64!important; text-decoration:underline!important; text-underline-offset:2px; }
+a[href$="leafletjs.com"] { color:#004a64!important; text-decoration:underline!important; text-underline-offset:2px; }
 .empty-state { max-width:720px; margin:auto; padding:48px 25px; border:1px dashed #96ac9f; border-radius:25px; background:rgba(255,255,255,.58); text-align:center; }
 .empty-state svg { color:var(--green); }.empty-state h3 { font-size:24px; }.empty-state p { color:var(--muted); }
 .limit-note { padding:14px; border-radius:14px; background:#fff8e0; }

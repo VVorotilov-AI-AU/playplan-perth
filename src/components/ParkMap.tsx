@@ -11,8 +11,12 @@ import type { Recommendation } from '../types';
 import 'leaflet/dist/leaflet.css';
 
 const tileUrl =
-  import.meta.env.VITE_OSM_TILE_URL ??
-  'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+  import.meta.env.VITE_SATELLITE_TILE_URL ??
+  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+
+const tileAttribution =
+  import.meta.env.VITE_SATELLITE_ATTRIBUTION ??
+  '&copy; Esri, Vantor, Earthstar Geographics, and the GIS User Community';
 
 function markerIcon(rank: number, selected: boolean) {
   return L.divIcon({
@@ -63,8 +67,9 @@ export function ParkMap({
         className="h-full min-h-[340px] w-full"
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+          attribution={tileAttribution}
           url={tileUrl}
+          maxZoom={19}
         />
         <FitResults recommendations={recommendations} />
         {recommendations.map((item, index) => (
@@ -81,17 +86,21 @@ export function ParkMap({
               <strong>{item.playground.name}</strong>
               <br />
               {item.distanceKm} km away · ~{item.estimatedDriveMinutes} min drive · {item.score}% match
+              <br />
+              <a href={item.playground.googleMapsUrl} target="_blank" rel="noreferrer">
+                Open place details in Google Maps
+              </a>
             </Popup>
           </Marker>
         ))}
       </MapContainer>
       <a
         className="map-report"
-        href="https://www.openstreetmap.org/fixthemap"
+        href="https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9"
         target="_blank"
         rel="noreferrer"
       >
-        Report a map issue
+        Satellite imagery details
       </a>
     </div>
   );

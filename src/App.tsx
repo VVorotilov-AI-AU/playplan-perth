@@ -811,7 +811,7 @@ function App() {
         <strong>PlayPlan Perth</strong>
         <span>A curated, non-commercial showcase. Always check official details before you go.</span>
         <span>
-          Suburbs: <a href={suburbDataSource.url} target="_blank" rel="noreferrer">Geoscape, CC BY 4.0</a> · Weather: <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo</a> · Map: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap contributors</a>
+          Suburbs: <a href={suburbDataSource.url} target="_blank" rel="noreferrer">Geoscape, CC BY 4.0</a> · Weather: <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo</a> · Satellite map: <a href="https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9" target="_blank" rel="noreferrer">Esri World Imagery</a> · <a href="https://github.com/VVorotilov-AI-AU/playplan-perth/blob/main/LICENSE" target="_blank" rel="noreferrer">MIT licence</a>
         </span>
       </footer>
 

@@ -13,10 +13,16 @@ describe('playground dataset', () => {
     expect(new Set(playgrounds.map((item) => item.id)).size).toBe(playgrounds.length);
   });
 
-  it('provides field evidence and coordinate-based Google Maps links', () => {
+  it('provides field evidence and place-detail Google Maps links', () => {
     playgrounds.forEach((item) => {
       expect(item.evidence.some((evidence) => evidence.fields.includes('facilities'))).toBe(true);
-      expect(item.googleMapsUrl).toContain(`${item.coordinates.lat},${item.coordinates.lng}`);
+      const url = new URL(item.googleMapsUrl);
+      const query = url.searchParams.get('query') ?? '';
+      expect(url.searchParams.get('api')).toBe('1');
+      expect(query).toContain(item.name);
+      expect(query).toContain(item.address);
+      expect(query).not.toBe(`${item.coordinates.lat},${item.coordinates.lng}`);
+      expect(url.searchParams.get('utm_source')).toBe('playplan_perth');
     });
   });
 

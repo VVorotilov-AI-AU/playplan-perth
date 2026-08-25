@@ -6,6 +6,7 @@ import type {
   TriState,
 } from '../types';
 import { PlaygroundSchema } from '../types';
+import { buildGoogleMapsPlaceUrl } from '../lib/maps';
 
 type FacilityInput = Partial<Playground['facilities']>;
 
@@ -64,7 +65,7 @@ function park(input: ParkInput): Playground {
     bookingUrl: input.bookingUrl,
     evidence: [evidence],
     status: input.status ?? 'open',
-    googleMapsUrl: `https://www.google.com/maps/search/?api=1&query=${input.lat},${input.lng}`,
+    googleMapsUrl: buildGoogleMapsPlaceUrl(input),
   });
 }
 

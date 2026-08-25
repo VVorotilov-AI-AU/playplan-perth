@@ -128,6 +128,42 @@ test('drive-time mode filters and labels recommendations honestly', async ({ pag
   await expect(page.getByText(/without live traffic/)).toBeVisible();
 });
 
+test('place buttons identify the playground and the satellite map is attributed', async ({ page }) => {
+  await page.route('https://api.open-meteo.com/**', (route) => route.abort());
+  await page.goto('/playplan-perth/#/today');
+  await page.getByRole('button', { name: /Find our best three/ }).click();
+
+  const firstCard = page.locator('.result-card').first();
+  const parkName = await firstCard.getByRole('heading').innerText();
+  const mapsLink = firstCard.getByRole('link', { name: 'Google Maps' });
+  const href = await mapsLink.getAttribute('href');
+  const placeUrl = new URL(href!);
+  expect(placeUrl.searchParams.get('api')).toBe('1');
+  expect(placeUrl.searchParams.get('query')).toContain(parkName);
+  expect(placeUrl.searchParams.get('query')).not.toMatch(/^-?\d+\.\d+,-?\d+\.\d+$/);
+
+  await firstCard.getByRole('button', { name: 'Why this fits' }).click();
+  await expect(page.getByRole('dialog', { name: parkName })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: parkName }).getByRole('link', { name: 'Open in Google Maps' })).toHaveAttribute('href', href!);
+
+  await expect(page.getByLabel('Map of matching playgrounds').locator('.leaflet-tile').first()).toHaveAttribute('src', /World_Imagery/);
+  await expect(page.getByLabel('Map of matching playgrounds')).toContainText('Esri');
+});
+
+test('every external action is a complete safe link', async ({ page }) => {
+  await page.route('https://api.open-meteo.com/**', (route) => route.abort());
+  await page.goto('/playplan-perth/#/today');
+  await page.getByRole('button', { name: /Find our best three/ }).click();
+  const links = page.locator('a[target="_blank"]');
+  const count = await links.count();
+  expect(count).toBeGreaterThan(0);
+  for (let index = 0; index < count; index += 1) {
+    const link = links.nth(index);
+    expect(await link.getAttribute('href')).toMatch(/^https:\/\//);
+    expect((await link.getAttribute('rel'))?.split(' ')).toContain('noreferrer');
+  }
+});
+
 test('app shell and recommendation cards reopen offline', async ({ context, page }) => {
   await page.route('https://api.open-meteo.com/**', (route) => route.abort());
   await page.goto('/playplan-perth/#/today');
