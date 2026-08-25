@@ -14,10 +14,22 @@ describe('private browser storage', () => {
     expect(loadMemories()).toEqual([]);
   });
 
+  it('rejects structurally invalid saved criteria before the app renders', () => {
+    localStorage.setItem('playplan:criteria:v1', JSON.stringify({ ages: 'not-an-array' }));
+    expect(loadCriteria()).toEqual({});
+    expect(localStorage.getItem('playplan:criteria:v1')).toBeNull();
+  });
+
+  it('drops visit entries with unknown feedback tags', () => {
+    localStorage.setItem('playplan:visits:v1', JSON.stringify([
+      { playgroundId: 'mueller-park', visitedAt: '2026-08-25T00:00:00Z', tags: ['invented-tag'], mode: 'today', ages: [3] },
+    ]));
+    expect(loadMemories()).toEqual([]);
+  });
+
   it('never persists a GPS coordinate', () => {
     saveCriteria({ mode: 'today', ages: [4], origin: { lat: -31.9, lng: 115.8 }, originLabel: 'Current location (not saved)', radiusKm: 10, essentials: [], preferences: [] });
     expect(localStorage.getItem('playplan:criteria:v1')).not.toContain('-31.9');
     expect(loadCriteria().originLabel).toBe('');
   });
 });
-

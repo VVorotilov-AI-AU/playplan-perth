@@ -103,6 +103,7 @@ function weatherScore(
 function memoryScore(
   playground: Playground,
   memories: VisitMemory[],
+  criteria: SearchCriteria,
 ): number {
   const visits = memories.filter((item) => item.playgroundId === playground.id);
   if (visits.length === 0) return 60;
@@ -112,7 +113,17 @@ function memoryScore(
   if (tags.has('visit-again')) score += 20;
   if (tags.has('age-mismatch')) score -= 35;
   if (tags.has('too-hot')) score -= 15;
+  if (tags.has('equipment-hot')) score -= 15;
   if (tags.has('too-crowded')) score -= 10;
+  if (tags.has('parking-difficult')) score -= 10;
+  if (tags.has('easy-parking')) score += 5;
+  if (tags.has('good-sightlines')) score += 10;
+  if (tags.has('pram-friendly')) score += 5;
+  if (tags.has('toilets-easy')) score += 5;
+  if (tags.has('toddler-friendly') && criteria.ages.some((age) => age <= 3)) {
+    score += 15;
+  }
+  if (tags.has('bbq-occupied') && criteria.mode === 'party') score -= 10;
   return Math.max(0, Math.min(100, score));
 }
 
@@ -136,7 +147,7 @@ function weightedScore(
     party: partyFacilitiesScore(playground),
     accessibility: accessibilityScore(playground),
     weather: weatherValue,
-    memory: memoryScore(playground, memories),
+    memory: memoryScore(playground, memories, criteria),
     novelty: noveltyScore(playground, memories),
     standout: Math.min(100, playground.standoutFeatures.length * 25),
     openSpace: playground.facilities.openLawn === 'yes' ? 100 : 25,

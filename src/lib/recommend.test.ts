@@ -72,6 +72,43 @@ describe('recommendation engine', () => {
     expect(adjusted.every((item) => item.playground.facilities.bbq === 'yes')).toBe(true);
   });
 
+  it('uses contextual parent feedback for the relevant family and mode', () => {
+    const target = recommendPlaygrounds(playgrounds, { ...criteria, essentials: [] }).at(-1)!;
+    const positive: VisitMemory = {
+      playgroundId: target.playground.id,
+      visitedAt: '2026-08-25T01:00:00Z',
+      tags: ['toddler-friendly', 'good-sightlines', 'easy-parking'],
+      mode: 'today',
+      ages: [2],
+      context: 'weekend-morning',
+    };
+    const toddlerSearch = { ...criteria, ages: [2], essentials: [] };
+    const before = recommendPlaygrounds([target.playground], toddlerSearch)[0];
+    const after = recommendPlaygrounds([target.playground], toddlerSearch, [positive])[0];
+    expect(after.score).toBeGreaterThan(before.score);
+  });
+
+  it('penalizes a repeatedly difficult arrival without changing essentials', () => {
+    const target = playgrounds.find((item) => item.facilities.bbq === 'yes')!;
+    const memory: VisitMemory = {
+      playgroundId: target.id,
+      visitedAt: '2026-08-25T01:00:00Z',
+      tags: ['parking-difficult', 'bbq-occupied'],
+      mode: 'party',
+      ages: [5],
+    };
+    const partyCriteria = {
+      ...criteria,
+      mode: 'party' as const,
+      origin: target.coordinates,
+      radiusKm: 40,
+      essentials: [] as SearchCriteria['essentials'],
+    };
+    const before = recommendPlaygrounds([target], partyCriteria)[0];
+    const after = recommendPlaygrounds([target], partyCriteria, [memory])[0];
+    expect(after.score).toBeLessThan(before.score);
+  });
+
   it('handles impossible combinations honestly', () => {
     const result = recommendPlaygrounds(playgrounds, {
       ...criteria,

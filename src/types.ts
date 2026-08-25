@@ -95,9 +95,22 @@ export type VisitTag =
   | 'kids-loved-it'
   | 'too-crowded'
   | 'too-hot'
+  | 'equipment-hot'
   | 'age-mismatch'
   | 'bbq-occupied'
+  | 'toddler-friendly'
+  | 'good-sightlines'
+  | 'pram-friendly'
+  | 'easy-parking'
+  | 'parking-difficult'
+  | 'toilets-easy'
   | 'visit-again';
+
+export type VisitContext =
+  | 'weekday-morning'
+  | 'weekday-afternoon'
+  | 'weekend-morning'
+  | 'weekend-afternoon';
 
 export interface VisitMemory {
   playgroundId: string;
@@ -106,6 +119,7 @@ export interface VisitMemory {
   note?: string;
   mode: Mode;
   ages: number[];
+  context?: VisitContext;
 }
 
 export interface WeatherContext {

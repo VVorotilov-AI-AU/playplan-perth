@@ -8,6 +8,7 @@ PlayPlan Perth is an installable mobile web app that helps families choose among
 - **Plan a party:** hard filters for confirmed BBQs, shelter, toilets, seating and lawn.
 - **Explore Perth:** browse, filter, favorite and revisit a 39-place collection.
 - **Private by design:** no accounts, names, birthdays, addresses or stored GPS coordinates.
+- **Contextual visit memory:** records supervision, toddler fit, crowd, heat, parking and practical arrival notes with optional time context.
 - **Resilient:** ranking continues without weather, map tiles or AI.
 
 Facilities use `yes`, `no` or `unknown`. Unknown never satisfies a must-have. BBQ means a facility is present, not that it is free when you arrive.
@@ -27,6 +28,8 @@ npm test
 npm run build
 npx playwright install chromium
 npm run test:e2e
+# or run the complete gate
+npm run check
 ```
 
 ## Architecture
@@ -40,3 +43,4 @@ React, TypeScript and Vite provide the static app. React Leaflet renders OpenStr
 This is a non-commercial showcase with a source-reviewed, curated selection, not a complete directory. Destination details change. Every detail panel links to the official source and shows the verification date. Always check before leaving.
 
 See [DATA_SOURCES.md](DATA_SOURCES.md) and [PRIVACY.md](PRIVACY.md).
+The [Perth parent feedback plan](docs/research/perth-parent-feedback-2026-08-25.md) explains which community signals are useful and how to collect them without scraping private groups.

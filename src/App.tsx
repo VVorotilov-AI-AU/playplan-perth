@@ -2,8 +2,10 @@ import {
   Accessibility,
   ArrowLeft,
   BarChart3,
+  Car,
   Check,
   ChevronRight,
+  Clock3,
   CloudSun,
   Compass,
   ExternalLink,
@@ -26,11 +28,12 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ParkMap } from './components/ParkMap';
 import { playgroundCount, playgrounds } from './data/playgrounds';
 import { suburbs } from './data/suburbs';
 import { createNarrator } from './lib/narrator';
+import { restoreCriteria } from './lib/criteria';
 import { recommendPlaygrounds } from './lib/recommend';
 import {
   loadCriteria,
@@ -49,6 +52,7 @@ import type {
   Recommendation,
   SearchCriteria,
   VisitMemory,
+  VisitContext,
   VisitTag,
   WeatherContext,
 } from './types';
@@ -81,13 +85,53 @@ const activityOptions: Array<{ key: Activity; label: string }> = [
   { key: 'flying-fox', label: 'Flying fox' },
 ];
 
-const visitOptions: Array<{ key: VisitTag; label: string }> = [
-  { key: 'kids-loved-it', label: 'Kids loved it' },
-  { key: 'visit-again', label: 'Visit again' },
-  { key: 'too-crowded', label: 'Too crowded' },
-  { key: 'too-hot', label: 'Too hot' },
-  { key: 'age-mismatch', label: 'Age mismatch' },
-  { key: 'bbq-occupied', label: 'BBQ occupied' },
+const visitTagLabels: Record<VisitTag, string> = {
+  'kids-loved-it': 'Kids loved it',
+  'visit-again': 'Visit again',
+  'too-crowded': 'Too crowded',
+  'too-hot': 'Too hot overall',
+  'equipment-hot': 'Equipment was hot',
+  'age-mismatch': 'Age mismatch',
+  'bbq-occupied': 'BBQ occupied',
+  'toddler-friendly': 'Toddler friendly',
+  'good-sightlines': 'Easy to supervise',
+  'pram-friendly': 'Pram friendly',
+  'easy-parking': 'Easy parking',
+  'parking-difficult': 'Parking difficult',
+  'toilets-easy': 'Toilets easy to reach',
+};
+
+const visitGroups: Array<{ label: string; options: VisitTag[] }> = [
+  {
+    label: 'Play and supervision',
+    options: [
+      'kids-loved-it',
+      'visit-again',
+      'toddler-friendly',
+      'good-sightlines',
+      'age-mismatch',
+      'too-crowded',
+      'equipment-hot',
+      'too-hot',
+    ],
+  },
+  {
+    label: 'Arrival and practicalities',
+    options: [
+      'easy-parking',
+      'parking-difficult',
+      'pram-friendly',
+      'toilets-easy',
+      'bbq-occupied',
+    ],
+  },
+];
+
+const visitContextOptions: Array<{ key: VisitContext; label: string }> = [
+  { key: 'weekday-morning', label: 'Weekday morning' },
+  { key: 'weekday-afternoon', label: 'Weekday afternoon' },
+  { key: 'weekend-morning', label: 'Weekend morning' },
+  { key: 'weekend-afternoon', label: 'Weekend afternoon' },
 ];
 
 const modeMeta: Record<
@@ -126,15 +170,18 @@ function hashMode(): Mode {
   return route === 'party' || route === 'explore' ? route : 'today';
 }
 
+function hashPark(): Playground | null {
+  const parts = window.location.hash.replace(/^#\/?/, '').split('/');
+  return parts[0] === 'park'
+    ? playgrounds.find((item) => item.id === parts[1]) ?? null
+    : null;
+}
+
 function App() {
   const saved = loadCriteria();
-  const [criteria, setCriteria] = useState<SearchCriteria>({
-    ...defaultCriteria,
-    ...saved,
-    mode: hashMode(),
-    origin: defaultCriteria.origin,
-    originLabel: saved.originLabel || defaultCriteria.originLabel,
-  });
+  const [criteria, setCriteria] = useState<SearchCriteria>(() =>
+    restoreCriteria(defaultCriteria, saved, hashMode(), suburbs),
+  );
   const [memories, setMemories] = useState<VisitMemory[]>(loadMemories);
   const [favorites, setFavorites] = useState<string[]>(loadFavorites);
   const [weather, setWeather] = useState<WeatherContext | null>(null);
@@ -143,10 +190,12 @@ function App() {
   >('idle');
   const [searched, setSearched] = useState(false);
   const [selectedId, setSelectedId] = useState<string>();
-  const [detailPark, setDetailPark] = useState<Playground | null>(null);
+  const [detailPark, setDetailPark] = useState<Playground | null>(hashPark);
   const [notePark, setNotePark] = useState<Playground | null>(null);
   const [noteTags, setNoteTags] = useState<VisitTag[]>([]);
   const [noteText, setNoteText] = useState('');
+  const [noteContext, setNoteContext] = useState<VisitContext>();
+  const [saveConfirmation, setSaveConfirmation] = useState('');
   const [gpsStatus, setGpsStatus] = useState<
     'idle' | 'loading' | 'denied' | 'ready'
   >('idle');
@@ -345,6 +394,7 @@ function App() {
       note: noteText.trim() || undefined,
       mode: criteria.mode,
       ages: criteria.ages,
+      context: noteContext,
     };
     const next = [entry, ...memories].slice(0, 100);
     setMemories(next);
@@ -352,6 +402,9 @@ function App() {
     setNotePark(null);
     setNoteTags([]);
     setNoteText('');
+    setNoteContext(undefined);
+    setSaveConfirmation(`Saved privately for ${notePark.name}. Future matches now use this visit.`);
+    window.setTimeout(() => setSaveConfirmation(''), 4500);
   }
 
   const ModeIcon = modeMeta[criteria.mode].icon;
@@ -382,6 +435,9 @@ function App() {
             <span><Heart size={17} /> Notes stay private</span>
             <span><CloudSun size={17} /> Weather-aware</span>
           </div>
+          <a className="hero-cta" href="#planner-title">
+            Start choosing <ChevronRight size={18} />
+          </a>
         </div>
 
         <div className="mode-card">
@@ -606,7 +662,9 @@ function App() {
                 {recommendations.length
                   ? criteria.mode === 'explore'
                     ? 'Explore the collection'
-                    : `Three strong choices from ${criteria.originLabel}`
+                    : recommendations.length === 3
+                      ? `Three strong choices from ${criteria.originLabel}`
+                      : `${recommendations.length} honest ${recommendations.length === 1 ? 'choice' : 'choices'} from ${criteria.originLabel}`
                   : 'Keep your essentials, widen the search'}
               </h2>
             </div>
@@ -682,6 +740,9 @@ function App() {
                     selected={selectedId === item.playground.id}
                     favorite={favorites.includes(item.playground.id)}
                     narration={narration[item.playground.id]}
+                    latestMemory={memories.find(
+                      (memory) => memory.playgroundId === item.playground.id,
+                    )}
                     onSelect={() => setSelectedId(item.playground.id)}
                     onFavorite={() => toggleFavorite(item.playground.id)}
                     onDetails={() => openDetail(item.playground)}
@@ -745,12 +806,20 @@ function App() {
           park={notePark}
           tags={noteTags}
           note={noteText}
+          context={noteContext}
           onTags={setNoteTags}
           onNote={setNoteText}
-          onClose={() => setNotePark(null)}
+          onContext={setNoteContext}
+          onClose={() => {
+            setNotePark(null);
+            setNoteContext(undefined);
+          }}
           onSave={saveVisit}
         />
       )}
+      <div className="save-confirmation" role="status" aria-live="polite">
+        {saveConfirmation}
+      </div>
     </main>
   );
 }
@@ -761,6 +830,7 @@ interface ResultCardProps {
   selected: boolean;
   favorite: boolean;
   narration?: string;
+  latestMemory?: VisitMemory;
   onSelect: () => void;
   onFavorite: () => void;
   onDetails: () => void;
@@ -773,6 +843,7 @@ function ResultCard({
   selected,
   favorite,
   narration,
+  latestMemory,
   onSelect,
   onFavorite,
   onDetails,
@@ -812,6 +883,19 @@ function ResultCard({
         </div>
       )}
       {item.evidenceWarning && <p className="evidence-warning">{item.evidenceWarning}</p>}
+      {latestMemory && (
+        <div className="memory-recall">
+          <strong>Your last visit</strong>
+          <span>
+            {latestMemory.context
+              ? visitContextOptions.find((item) => item.key === latestMemory.context)?.label
+              : new Date(latestMemory.visitedAt).toLocaleDateString('en-AU')}
+            {' · '}
+            {latestMemory.tags.slice(0, 3).map((tag) => visitTagLabels[tag]).join(', ')}
+          </span>
+          {latestMemory.note && <p>{latestMemory.note}</p>}
+        </div>
+      )}
       <div className="card-actions">
         <button type="button" className="text-button" onClick={onDetails}>
           Why this fits <ChevronRight size={17} />
@@ -845,6 +929,15 @@ function DetailPanel({
   onFavorite: () => void;
   onNote: () => void;
 }) {
+  const closeButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    closeButton.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [onClose]);
   return (
     <div className="overlay" role="presentation" onMouseDown={onClose}>
       <aside
@@ -855,7 +948,7 @@ function DetailPanel({
         onMouseDown={(event) => event.stopPropagation()}
       >
         <div className="panel-heading">
-          <button type="button" className="icon-button" onClick={onClose} aria-label="Close details">
+          <button ref={closeButton} type="button" className="icon-button" onClick={onClose} aria-label="Close details">
             <ArrowLeft size={22} />
           </button>
           <button type="button" className="icon-button" onClick={onFavorite} aria-label="Toggle favorite">
@@ -920,19 +1013,33 @@ function VisitDialog({
   park,
   tags,
   note,
+  context,
   onTags,
   onNote,
+  onContext,
   onClose,
   onSave,
 }: {
   park: Playground;
   tags: VisitTag[];
   note: string;
+  context?: VisitContext;
   onTags: (tags: VisitTag[]) => void;
   onNote: (note: string) => void;
+  onContext: (context: VisitContext) => void;
   onClose: () => void;
   onSave: () => void;
 }) {
+  const closeButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    closeButton.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [onClose]);
+
   function toggle(tag: VisitTag) {
     onTags(tags.includes(tag) ? tags.filter((item) => item !== tag) : [...tags, tag]);
   }
@@ -945,26 +1052,48 @@ function VisitDialog({
         aria-labelledby="note-title"
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <button type="button" className="close-button" onClick={onClose} aria-label="Close note dialog">
+        <button ref={closeButton} type="button" className="close-button" onClick={onClose} aria-label="Close note dialog">
           <X size={21} />
         </button>
         <p className="step-label">Private visit memory</p>
         <h2 id="note-title">How was {park.name}?</h2>
-        <p>This stays on this device and helps tune your next shortlist.</p>
-        <div className="visit-tag-grid">
-          {visitOptions.map(({ key, label }) => (
-            <button
-              key={key}
-              type="button"
-              aria-pressed={tags.includes(key)}
-              className={tags.includes(key) ? 'visit-tag active' : 'visit-tag'}
-              onClick={() => toggle(key)}
-            >
-              {tags.includes(key) && <Check size={15} />}
-              {label}
-            </button>
-          ))}
-        </div>
+        <p>This stays on this device. Context makes feedback more useful than a star rating.</p>
+        <fieldset className="visit-context">
+          <legend><Clock3 size={17} /> When did this feel true? <span>Optional</span></legend>
+          <div className="visit-tag-grid">
+            {visitContextOptions.map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                aria-pressed={context === item.key}
+                className={context === item.key ? 'visit-tag active' : 'visit-tag'}
+                onClick={() => onContext(item.key)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+        {visitGroups.map((group) => (
+          <fieldset className="visit-context" key={group.label}>
+            <legend>{group.label}</legend>
+            <div className="visit-tag-grid">
+              {group.options.map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  aria-pressed={tags.includes(key)}
+                  className={tags.includes(key) ? 'visit-tag active' : 'visit-tag'}
+                  onClick={() => toggle(key)}
+                >
+                  {key === 'easy-parking' || key === 'parking-difficult' ? <Car size={15} /> : null}
+                  {tags.includes(key) && <Check size={15} />}
+                  {visitTagLabels[key]}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+        ))}
         <label className="note-field">
           Optional note
           <textarea
