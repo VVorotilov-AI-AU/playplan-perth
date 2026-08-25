@@ -6,7 +6,7 @@ PlayPlan Perth is an installable mobile web app that helps families choose among
 
 - **Go today:** three explainable recommendations in under a minute.
 - **Plan a party:** hard filters for confirmed BBQs, shelter, toilets, seating and lawn.
-- **Explore Perth:** browse, filter, favorite and revisit a 39-place collection.
+- **Explore Perth:** browse, filter, favorite and revisit a growing 100-place showcase collection.
 - **Metropolitan suburb search:** type-ahead search across 373 Perth suburbs, derived from the August 2026 Geoscape boundaries dataset.
 - **Two travel limits:** filter by straight-line kilometres or a clearly labelled approximate drive time without live traffic.
 - **Private by design:** no accounts, names, birthdays, addresses or stored GPS coordinates.
@@ -44,7 +44,7 @@ React, TypeScript and Vite provide the static app. React Leaflet renders Esri Wo
 
 ## Data and limits
 
-This is a non-commercial showcase with a source-reviewed, curated selection, not a complete directory. Destination details change. Every detail panel links to the official source and shows the verification date. Always check before leaving.
+This is a non-commercial showcase with 100 curated places, not a complete directory of Perth playgrounds. The first 39 records have facility-level source review. The next 61 use an AI-assisted identity and location check against a council-area source plus an OpenStreetMap feature; unconfirmed facilities remain `unknown` and these records are clearly labelled. Destination details change. Always check before leaving.
 
 The original source code is available under the [MIT licence](LICENSE). Third-party imagery, maps, weather and boundary data retain their own terms, documented in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 

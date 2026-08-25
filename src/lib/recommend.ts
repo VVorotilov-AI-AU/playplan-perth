@@ -201,10 +201,13 @@ function weightedScore(
     (entry): entry is [number, number] => entry[0] !== null,
   );
   const totalWeight = active.reduce((sum, [, weight]) => sum + weight, 0);
-  return active.reduce(
+  const score = active.reduce(
     (sum, [value, weight]) => sum + value * (weight / totalWeight),
     0,
   );
+  return playground.verificationMethod === 'ai-assisted-source-review'
+    ? score * 0.78
+    : score;
 }
 
 function buildReasons(
@@ -304,7 +307,9 @@ export function recommendPlaygrounds(
       reasons: buildReasons(playground, criteria, weather),
       tradeoffs: buildTradeoffs(playground),
       evidenceWarning:
-        playground.status === 'check-before-visit'
+        playground.verificationMethod === 'ai-assisted-source-review'
+          ? 'AI checked the identity, location and source. Unlisted age and facility details remain unconfirmed.'
+          : playground.status === 'check-before-visit'
           ? 'Details may be changing. Check the official source before leaving.'
           : undefined,
     }))

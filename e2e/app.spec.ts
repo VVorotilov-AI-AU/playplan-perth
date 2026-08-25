@@ -69,7 +69,8 @@ test('party and explore modes expose their complete journeys', async ({ page }) 
   await expect(page.getByRole('button', { name: 'BBQ on site' })).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('tab', { name: /Explore Perth/ }).click();
   await expect(page.getByRole('heading', { name: 'Explore the collection' })).toBeVisible();
-  await expect(page.locator('.result-card')).toHaveCount(39);
+  await expect(page.locator('.result-card')).toHaveCount(100);
+  await expect(page.getByText(/not a complete directory/i).first()).toBeVisible();
 });
 
 test('a direct park link opens the intended detail panel', async ({ page }) => {

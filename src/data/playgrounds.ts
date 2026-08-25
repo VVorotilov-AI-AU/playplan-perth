@@ -7,6 +7,7 @@ import type {
 } from '../types';
 import { PlaygroundSchema } from '../types';
 import { buildGoogleMapsPlaceUrl } from '../lib/maps';
+import { aiReviewedPlaygroundSeeds } from './expandedPlaygrounds';
 
 type FacilityInput = Partial<Playground['facilities']>;
 
@@ -39,11 +40,14 @@ interface ParkInput {
   confidence?: Evidence['confidence'];
   status?: Playground['status'];
   bookingUrl?: string;
+  evidenceFields?: string[];
+  additionalEvidence?: Evidence[];
+  verificationMethod?: Playground['verificationMethod'];
 }
 
 function park(input: ParkInput): Playground {
   const evidence: Evidence = {
-    fields: ['ageBands', 'activities', 'facilities', 'status'],
+    fields: input.evidenceFields ?? ['ageBands', 'activities', 'facilities', 'status'],
     sourceUrl: input.sourceUrl,
     sourceTitle: input.sourceTitle,
     verifiedAt: '2026-08-25',
@@ -63,7 +67,8 @@ function park(input: ParkInput): Playground {
     standoutFeatures: input.features,
     cautions: input.cautions ?? [],
     bookingUrl: input.bookingUrl,
-    evidence: [evidence],
+    evidence: [evidence, ...(input.additionalEvidence ?? [])],
+    verificationMethod: input.verificationMethod ?? 'manual-source-review',
     status: input.status ?? 'open',
     googleMapsUrl: buildGoogleMapsPlaceUrl(input),
   });
@@ -703,6 +708,39 @@ export const playgrounds: Playground[] = [
     sourceTitle: "Whiteman Park, Pia's Place",
     confidence: 'medium',
   }),
+  ...aiReviewedPlaygroundSeeds.map((seed) =>
+    park({
+      ...seed,
+      address: `${seed.name}, ${seed.suburb} WA`,
+      ages: seed.ages ?? ['1-3', '4-6', '7-9', '10-12'],
+      activities: seed.activities ?? (seed.name.toLowerCase().includes('nature')
+        ? ['nature-play']
+        : ['climbing']),
+      facilities: seed.facilities ?? {},
+      features: seed.features ?? [
+        `Local playground in ${seed.suburb}`,
+        'AI-assisted identity and location check',
+      ],
+      cautions: seed.cautions ?? [
+        'Age fit and facilities still need an individual source or community confirmation',
+      ],
+      sourceUrl: seed.officialSourceUrl,
+      sourceTitle: seed.officialSourceTitle,
+      evidenceFields: seed.confirmedFields ?? ['local-government-area context'],
+      additionalEvidence: [
+        {
+          fields: ['identity', 'coordinates'],
+          sourceUrl: seed.osmUrl,
+          sourceTitle: 'OpenStreetMap playground feature used for discovery',
+          verifiedAt: '2026-08-25',
+          confidence: 'medium',
+        },
+      ],
+      confidence: 'medium',
+      status: 'check-before-visit',
+      verificationMethod: 'ai-assisted-source-review',
+    }),
+  ),
 ];
 
 export const playgroundCount = playgrounds.length;

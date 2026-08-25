@@ -421,7 +421,7 @@ function App() {
         </a>
         <span className="coverage-pill">
           <MapPin size={14} aria-hidden="true" />
-          {playgroundCount} source-reviewed places
+          {playgroundCount} showcase places
         </span>
       </header>
 
@@ -431,7 +431,8 @@ function App() {
           <h1>Pick a park everyone loves.</h1>
           <p className="hero-lede">
             Match Perth playgrounds to your children&apos;s ages, today&apos;s
-            plan and the facilities your family actually needs.
+            plan and the facilities your family actually needs. This growing
+            100-place showcase is not a complete directory of Perth playgrounds.
           </p>
           <div className="trust-row">
             <span><ShieldCheck size={17} /> Evidence shown</span>
@@ -809,9 +810,9 @@ function App() {
 
       <footer>
         <strong>PlayPlan Perth</strong>
-        <span>A curated, non-commercial showcase. Always check official details before you go.</span>
+        <span>A growing 100-place showcase, not a complete Perth directory. Always check official details before you go.</span>
         <span>
-          Suburbs: <a href={suburbDataSource.url} target="_blank" rel="noreferrer">Geoscape, CC BY 4.0</a> · Weather: <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo</a> · Satellite map: <a href="https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9" target="_blank" rel="noreferrer">Esri World Imagery</a> · <a href="https://github.com/VVorotilov-AI-AU/playplan-perth/blob/main/LICENSE" target="_blank" rel="noreferrer">MIT licence</a>
+          Suburbs: <a href={suburbDataSource.url} target="_blank" rel="noreferrer">Geoscape, CC BY 4.0</a> · Playground discovery: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a> · Weather: <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo</a> · Satellite map: <a href="https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9" target="_blank" rel="noreferrer">Esri World Imagery</a> · <a href="https://github.com/VVorotilov-AI-AU/playplan-perth/blob/main/LICENSE" target="_blank" rel="noreferrer">MIT licence</a>
         </span>
       </footer>
 
@@ -896,6 +897,12 @@ function ResultCard({
         </button>
       </div>
       <p className="suburb-label">{park.suburb} · {item.distanceKm} km · ~{item.estimatedDriveMinutes} min drive</p>
+      <span className={`verification-badge ${park.verificationMethod === 'ai-assisted-source-review' ? 'ai' : 'manual'}`}>
+        <ShieldCheck size={14} />
+        {park.verificationMethod === 'ai-assisted-source-review'
+          ? 'AI source-checked'
+          : 'Facilities source-reviewed'}
+      </span>
       <h3>{park.name}</h3>
       <p className="result-explanation">{narration ?? item.reasons.join('. ')} </p>
       <div className="feature-row">
@@ -985,6 +992,12 @@ function DetailPanel({
         <p className="step-label">{park.suburb} · {park.council}</p>
         <h2 id="detail-title">{park.name}</h2>
         <p className="detail-address"><MapPin size={17} /> {park.address}</p>
+        <p className={`verification-summary ${park.verificationMethod === 'ai-assisted-source-review' ? 'ai' : 'manual'}`}>
+          <ShieldCheck size={18} />
+          {park.verificationMethod === 'ai-assisted-source-review'
+            ? 'AI matched this playground to its location and source. Only facts named in the linked evidence are confirmed; all other facilities and age details remain unknown.'
+            : 'Facilities and age suitability were reviewed against the linked sources.'}
+        </p>
         <div className="detail-section">
           <h3>What makes it stand out</h3>
           <ul className="feature-list">

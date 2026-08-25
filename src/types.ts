@@ -69,6 +69,7 @@ export const PlaygroundSchema = z.object({
   cautions: z.array(z.string()),
   bookingUrl: z.string().url().optional(),
   evidence: z.array(EvidenceSchema).min(1),
+  verificationMethod: z.enum(['manual-source-review', 'ai-assisted-source-review']),
   status: z.enum(['open', 'check-before-visit']),
   googleMapsUrl: z.string().url().includes('google.com/maps'),
 });

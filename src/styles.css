@@ -128,6 +128,8 @@ h1 { margin: 0; color: var(--green-dark); font-family: Georgia, "Times New Roman
 .icon-button.active { color:#d64750; background:#fff1f1; }
 .result-card h3 { margin:14px 0 3px; color:var(--green-dark); font-family:Georgia,serif; font-size:25px; }
 .suburb-label { margin:0; color:var(--muted); font-size:13px; }
+.verification-badge { display:inline-flex; align-items:center; gap:5px; width:max-content; margin-top:9px; padding:5px 9px; border-radius:999px; background:#e7f3ed; color:var(--green-dark); font-size:11px; font-weight:850; letter-spacing:.01em; }
+.verification-badge.ai { background:#fff0c9; color:#795c18; }
 .result-explanation { margin:14px 0; line-height:1.55; }
 .feature-row { display:flex; flex-wrap:wrap; gap:7px; }
 .feature-row span { padding:6px 9px; border-radius:999px; background:#e4f1eb; color:var(--green-dark); font-size:12px; font-weight:750; }
@@ -166,6 +168,9 @@ footer a { color:white; }
 .panel-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
 .panel-heading h2 { margin:4px 0; color:var(--green-dark); font-family:Georgia,serif; font-size:34px; }
 .detail-address { margin:0; color:var(--muted); }
+.verification-summary { display:flex; align-items:flex-start; gap:8px; margin:14px 0 0; padding:12px 14px; border-radius:14px; background:#e7f3ed; color:var(--green-dark); font-size:13px; line-height:1.45; }
+.verification-summary svg { flex:0 0 auto; margin-top:1px; }
+.verification-summary.ai { background:#fff3d4; color:#684e18; }
 .detail-section { margin-top:26px; }.detail-section h3 { margin:0 0 10px; }
 .feature-list { display:flex; flex-wrap:wrap; gap:7px; margin:0; padding:0; list-style:none; }.feature-list li { display:inline-flex; align-items:center; gap:6px; padding:7px 10px; background:#e4f1eb; border-radius:999px; font-size:13px; }
 .facility-table { width:100%; }.facility-table>div { display:flex; justify-content:space-between; gap:20px; padding:10px 3px; border-bottom:1px solid var(--line); }.facility-table strong { text-align:right; font-weight:800; }

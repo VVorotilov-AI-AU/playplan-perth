@@ -2,6 +2,10 @@
 
 The bundled playground collection is manually curated from official council, WA Government and park-operator pages. Nature Play WA may be used to discover candidates, but a discovery listing alone is not accepted as facility evidence.
 
+The 100-place showcase has two transparent verification levels. The original 39 destinations have facility-level source review. The additional 61 destinations were selected through an AI-assisted matching pass using named OpenStreetMap playground features and an official local-government or operator source. This second level verifies discovery identity and location only. It never converts missing age, activity or facility information into a confirmed fact.
+
+OpenStreetMap-derived names and coordinates are attributed to © OpenStreetMap contributors and used under the ODbL. Each AI-assisted record links to the exact OpenStreetMap feature and the relevant official local-government or operator source.
+
 Each record stores an official source URL and title, supported fields, date checked, confidence and check-before-visit status, plus tri-state facility values: `yes`, `no` and `unknown`.
 
 The build fails for missing identifiers, invalid Perth coordinates, missing age bands, missing evidence or invalid Google Maps links. Unknown facilities do not pass hard filters. The app never copies third-party reviews or destination photos.

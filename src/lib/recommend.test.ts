@@ -137,6 +137,29 @@ describe('recommendation engine', () => {
     expect(result.every((item) => item.estimatedDriveMinutes <= 10)).toBe(true);
   });
 
+  it('keeps AI-assisted candidates below an otherwise identical facility-reviewed place', () => {
+    const manual = playgrounds.find(
+      (item) => item.verificationMethod === 'manual-source-review',
+    )!;
+    const assisted = {
+      ...manual,
+      id: 'ai-assisted-ranking-test',
+      name: 'AI-assisted ranking test',
+      verificationMethod: 'ai-assisted-source-review' as const,
+    };
+    const result = recommendPlaygrounds(
+      [assisted, manual],
+      { ...criteria, origin: manual.coordinates, essentials: [], preferences: [] },
+      [],
+      null,
+      2,
+    );
+    expect(result.map((item) => item.playground.id)).toEqual([
+      manual.id,
+      assisted.id,
+    ]);
+  });
+
   it('lets explore browse the full curated collection', () => {
     const result = recommendPlaygrounds(playgrounds, { ...criteria, mode: 'explore', radiusKm: 5, essentials: [] }, [], null, playgrounds.length);
     expect(result).toHaveLength(playgrounds.length);

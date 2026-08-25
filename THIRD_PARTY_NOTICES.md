@@ -10,6 +10,10 @@ The embedded satellite basemap is Esri World Imagery. Required map attribution i
 
 Place-detail buttons use the official keyless [Google Maps URLs](https://developers.google.com/maps/documentation/urls/get-started). Google Maps content, photos, reviews and routing remain on Google and are subject to Google's terms. PlayPlan Perth does not copy or cache them.
 
+## OpenStreetMap playground discovery
+
+The AI-assisted expansion uses named playground features and coordinates from [OpenStreetMap](https://www.openstreetmap.org/copyright). OpenStreetMap data is © OpenStreetMap contributors and available under the Open Data Commons Open Database License (ODbL). Facility facts are not inferred from missing OpenStreetMap tags.
+
 ## Geoscape suburb boundaries
 
 The suburb origin catalogue is derived from [Geoscape Administrative Boundaries](https://data.gov.au/data/dataset/wa-suburb-locality-boundaries-geoscape-administrative-boundaries), licensed under CC BY 4.0.
