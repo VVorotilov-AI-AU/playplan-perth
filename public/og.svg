@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#fbf4e7"/>
+  <circle cx="1030" cy="110" r="82" fill="#f6c849"/>
+  <path d="M0 445c237-180 474-165 690 4 175-128 345-132 510-18v199H0Z" fill="#73ad7e"/>
+  <path d="M0 530c250-129 493-107 706 27 167-85 331-86 494-1v74H0Z" fill="#176b52"/>
+  <text x="92" y="180" fill="#176b52" font-family="Arial,sans-serif" font-size="28" font-weight="700" letter-spacing="4">SCHOOL HOLIDAYS, SORTED</text>
+  <text x="86" y="300" fill="#0c4938" font-family="Georgia,serif" font-size="82" font-weight="700">PlayPlan Perth</text>
+  <text x="92" y="370" fill="#425a51" font-family="Arial,sans-serif" font-size="34">Pick a park everyone loves.</text>
+</svg>
