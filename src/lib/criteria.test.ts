@@ -7,7 +7,9 @@ const defaults: SearchCriteria = {
   ages: [3, 8],
   origin: { lat: -31.949, lng: 115.824 },
   originLabel: 'Subiaco',
+  travelLimitMode: 'distance',
   radiusKm: 15,
+  maxDriveMinutes: 30,
   essentials: ['shade'],
   preferences: [],
 };

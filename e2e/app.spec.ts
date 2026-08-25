@@ -84,8 +84,8 @@ test('invalid saved criteria cannot crash the application', async ({ page }) => 
   });
   await page.goto('/playplan-perth/#/today');
   await expect(page.getByRole('heading', { name: 'Pick a park everyone loves.' })).toBeVisible();
-  await expect(page.getByRole('button', { name: '3' })).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.getByRole('button', { name: '8' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: '3', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: '8', exact: true })).toHaveAttribute('aria-pressed', 'true');
 });
 
 test('mobile users see recommendation cards before the map', async ({ page }) => {
@@ -102,11 +102,30 @@ test('mobile users see recommendation cards before the map', async ({ page }) =>
 
 test('suburb selection remains internally consistent after refresh', async ({ page }) => {
   await page.goto('/playplan-perth/#/today');
-  await page.getByLabel('Starting suburb').selectOption('Bayswater');
+  await page.getByLabel('Starting suburb').fill('Bays');
+  await page.getByRole('option', { name: 'Bayswater' }).click();
   await page.reload();
   await expect(page.getByLabel('Starting suburb')).toHaveValue('Bayswater');
   const saved = await page.evaluate(() => localStorage.getItem('playplan:criteria:v1'));
   expect(saved).not.toContain('"origin"');
+});
+
+test('suburb search suggests matches as the parent types', async ({ page }) => {
+  await page.goto('/playplan-perth/#/today');
+  const search = page.getByLabel('Starting suburb');
+  await search.fill('Two Ro');
+  await expect(page.getByRole('option', { name: 'Two Rocks' })).toBeVisible();
+  await search.press('Enter');
+  await expect(search).toHaveValue('Two Rocks');
+});
+
+test('drive-time mode filters and labels recommendations honestly', async ({ page }) => {
+  await page.route('https://api.open-meteo.com/**', (route) => route.abort());
+  await page.goto('/playplan-perth/#/today');
+  await page.getByRole('button', { name: '~30 min' }).click();
+  await page.getByRole('button', { name: /Find our best three/ }).click();
+  await expect(page.locator('.result-card').first()).toContainText(/~\d+ min drive/);
+  await expect(page.getByText(/without live traffic/)).toBeVisible();
 });
 
 test('app shell and recommendation cards reopen offline', async ({ context, page }) => {

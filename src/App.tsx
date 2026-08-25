@@ -30,8 +30,9 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ParkMap } from './components/ParkMap';
+import { SuburbCombobox } from './components/SuburbCombobox';
 import { playgroundCount, playgrounds } from './data/playgrounds';
-import { suburbs } from './data/suburbs';
+import { suburbDataSource, suburbs } from './data/suburbs';
 import { createNarrator } from './lib/narrator';
 import { restoreCriteria } from './lib/criteria';
 import { recommendPlaygrounds } from './lib/recommend';
@@ -160,7 +161,9 @@ const defaultCriteria: SearchCriteria = {
   ages: [3, 8],
   origin: suburbs.find((item) => item.name === 'Subiaco')!.coordinates,
   originLabel: 'Subiaco',
+  travelLimitMode: 'distance',
   radiusKm: 15,
+  maxDriveMinutes: 30,
   essentials: ['shade', 'toilets', 'bbq'],
   preferences: ['climbing', 'water-play'],
 };
@@ -513,25 +516,11 @@ function App() {
                 </div>
               </div>
               <div className="location-row">
-                <label className="select-wrap">
-                  <span className="sr-only">Starting suburb</span>
-                  <MapPin size={18} />
-                  <select
-                    value={
-                      suburbs.some((item) => item.name === criteria.originLabel)
-                        ? criteria.originLabel
-                        : ''
-                    }
-                    onChange={(event) => selectSuburb(event.target.value)}
-                  >
-                    <option value="" disabled>Select a suburb</option>
-                    {suburbs.map((suburb) => (
-                      <option key={suburb.name} value={suburb.name}>
-                        {suburb.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <SuburbCombobox
+                  suburbs={suburbs}
+                  value={criteria.originLabel}
+                  onSelect={selectSuburb}
+                />
                 <button
                   type="button"
                   className="secondary-button"
@@ -548,22 +537,45 @@ function App() {
               {gpsStatus === 'ready' && (
                 <p className="inline-note success">Current location is used once and never saved.</p>
               )}
-              <div className="radius-row" aria-label="Distance radius">
-                {[5, 10, 15, 25, 40].map((radius) => (
-                  <button
-                    key={radius}
-                    type="button"
-                    aria-pressed={criteria.radiusKm === radius}
-                    className={criteria.radiusKm === radius ? 'radius-button active' : 'radius-button'}
-                    onClick={() =>
-                      setCriteria((current) => ({ ...current, radiusKm: radius }))
-                    }
-                  >
-                    {radius} km
-                  </button>
-                ))}
+              <div className="travel-limit-grid">
+                <fieldset className="travel-limit-column">
+                  <legend>By distance</legend>
+                  <div className="radius-row" aria-label="Straight-line distance limit">
+                    {[5, 10, 15, 25, 40].map((radius) => (
+                      <button
+                        key={radius}
+                        type="button"
+                        aria-pressed={criteria.travelLimitMode === 'distance' && criteria.radiusKm === radius}
+                        className={criteria.travelLimitMode === 'distance' && criteria.radiusKm === radius ? 'radius-button active' : 'radius-button'}
+                        onClick={() =>
+                          setCriteria((current) => ({ ...current, travelLimitMode: 'distance', radiusKm: radius }))
+                        }
+                      >
+                        {radius} km
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
+                <fieldset className="travel-limit-column">
+                  <legend>By approximate drive</legend>
+                  <div className="radius-row" aria-label="Approximate drive-time limit">
+                    {[10, 20, 30, 45, 60].map((minutes) => (
+                      <button
+                        key={minutes}
+                        type="button"
+                        aria-pressed={criteria.travelLimitMode === 'drive-time' && criteria.maxDriveMinutes === minutes}
+                        className={criteria.travelLimitMode === 'drive-time' && criteria.maxDriveMinutes === minutes ? 'radius-button active' : 'radius-button'}
+                        onClick={() =>
+                          setCriteria((current) => ({ ...current, travelLimitMode: 'drive-time', maxDriveMinutes: minutes }))
+                        }
+                      >
+                        ~{minutes} min
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
               </div>
-              <p className="distance-note">Distance is straight-line. Google Maps provides actual routing.</p>
+              <p className="distance-note">Choose one limit. Kilometres are straight-line. Drive time is a local estimate without live traffic. Google Maps provides the actual route.</p>
             </div>
 
             <div className="field-block">
@@ -704,7 +716,11 @@ function App() {
           {recommendations.length === 0 ? (
             <div className="empty-state">
               <MapIcon size={42} />
-              <h3>No place inside {criteria.radiusKm} km confirms every essential.</h3>
+              <h3>
+                No place within {criteria.travelLimitMode === 'drive-time'
+                  ? `about ${criteria.maxDriveMinutes} minutes by car`
+                  : `${criteria.radiusKm} km`} confirms every essential.
+              </h3>
               <p>
                 Try a wider radius or remove {criteria.essentials.length > 0
                   ? facilityOptions.find((item) => item.key === criteria.essentials[0])?.label.toLowerCase()
@@ -716,16 +732,27 @@ function App() {
                 onClick={() =>
                   setCriteria((current) => ({
                     ...current,
-                    radiusKm: current.radiusKm < 40 ? 40 : current.radiusKm,
+                    radiusKm:
+                      current.travelLimitMode === 'distance' && current.radiusKm < 40
+                        ? 40
+                        : current.radiusKm,
+                    maxDriveMinutes:
+                      current.travelLimitMode === 'drive-time' && current.maxDriveMinutes < 60
+                        ? 60
+                        : current.maxDriveMinutes,
                     essentials:
-                      current.radiusKm < 40
+                      (current.travelLimitMode === 'distance' && current.radiusKm < 40) ||
+                      (current.travelLimitMode === 'drive-time' && current.maxDriveMinutes < 60)
                         ? current.essentials
                         : current.essentials.slice(1),
                   }))
                 }
               >
-                {criteria.radiusKm < 40
-                  ? 'Expand to 40 km'
+                {(criteria.travelLimitMode === 'distance' && criteria.radiusKm < 40) ||
+                (criteria.travelLimitMode === 'drive-time' && criteria.maxDriveMinutes < 60)
+                  ? criteria.travelLimitMode === 'drive-time'
+                    ? 'Expand to about 60 min'
+                    : 'Expand to 40 km'
                   : `Remove ${facilityOptions.find((item) => item.key === criteria.essentials[0])?.label ?? 'one requirement'}`}
               </button>
             </div>
@@ -784,7 +811,7 @@ function App() {
         <strong>PlayPlan Perth</strong>
         <span>A curated, non-commercial showcase. Always check official details before you go.</span>
         <span>
-          Weather: <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo</a> · Map: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap contributors</a>
+          Suburbs: <a href={suburbDataSource.url} target="_blank" rel="noreferrer">Geoscape, CC BY 4.0</a> · Weather: <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo</a> · Map: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap contributors</a>
         </span>
       </footer>
 
@@ -868,7 +895,7 @@ function ResultCard({
           <Heart size={20} fill={favorite ? 'currentColor' : 'none'} />
         </button>
       </div>
-      <p className="suburb-label">{park.suburb} · {item.distanceKm} km</p>
+      <p className="suburb-label">{park.suburb} · {item.distanceKm} km · ~{item.estimatedDriveMinutes} min drive</p>
       <h3>{park.name}</h3>
       <p className="result-explanation">{narration ?? item.reasons.join('. ')} </p>
       <div className="feature-row">

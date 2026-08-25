@@ -28,8 +28,9 @@ describe('private browser storage', () => {
   });
 
   it('never persists a GPS coordinate', () => {
-    saveCriteria({ mode: 'today', ages: [4], origin: { lat: -31.9, lng: 115.8 }, originLabel: 'Current location (not saved)', radiusKm: 10, essentials: [], preferences: [] });
+    saveCriteria({ mode: 'today', ages: [4], origin: { lat: -31.9, lng: 115.8 }, originLabel: 'Current location (not saved)', travelLimitMode: 'drive-time', radiusKm: 10, maxDriveMinutes: 20, essentials: [], preferences: [] });
     expect(localStorage.getItem('playplan:criteria:v1')).not.toContain('-31.9');
     expect(loadCriteria().originLabel).toBe('');
+    expect(loadCriteria().travelLimitMode).toBe('drive-time');
   });
 });

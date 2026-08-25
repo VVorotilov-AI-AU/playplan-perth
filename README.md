@@ -7,6 +7,8 @@ PlayPlan Perth is an installable mobile web app that helps families choose among
 - **Go today:** three explainable recommendations in under a minute.
 - **Plan a party:** hard filters for confirmed BBQs, shelter, toilets, seating and lawn.
 - **Explore Perth:** browse, filter, favorite and revisit a 39-place collection.
+- **Metropolitan suburb search:** type-ahead search across 373 Perth suburbs, derived from the August 2026 Geoscape boundaries dataset.
+- **Two travel limits:** filter by straight-line kilometres or a clearly labelled approximate drive time without live traffic.
 - **Private by design:** no accounts, names, birthdays, addresses or stored GPS coordinates.
 - **Contextual visit memory:** records supervision, toddler fit, crowd, heat, parking and practical arrival notes with optional time context.
 - **Resilient:** ranking continues without weather, map tiles or AI.

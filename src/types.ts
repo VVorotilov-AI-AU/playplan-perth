@@ -75,6 +75,7 @@ export const PlaygroundSchema = z.object({
 export type Playground = z.infer<typeof PlaygroundSchema>;
 
 export type Mode = 'today' | 'party' | 'explore';
+export type TravelLimitMode = 'distance' | 'drive-time';
 
 export interface Coordinates {
   lat: number;
@@ -86,7 +87,9 @@ export interface SearchCriteria {
   ages: number[];
   origin: Coordinates;
   originLabel: string;
+  travelLimitMode: TravelLimitMode;
   radiusKm: number;
+  maxDriveMinutes: number;
   essentials: FacilityKey[];
   preferences: Activity[];
 }
@@ -133,6 +136,7 @@ export interface Recommendation {
   playground: Playground;
   score: number;
   distanceKm: number;
+  estimatedDriveMinutes: number;
   reasons: string[];
   tradeoffs: string[];
   evidenceWarning?: string;

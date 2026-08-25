@@ -80,7 +80,7 @@ export function ParkMap({
             <Popup>
               <strong>{item.playground.name}</strong>
               <br />
-              {item.distanceKm} km away · {item.score}% match
+              {item.distanceKm} km away · ~{item.estimatedDriveMinutes} min drive · {item.score}% match
             </Popup>
           </Marker>
         ))}

@@ -25,6 +25,12 @@ export function distanceKm(
   return 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(h));
 }
 
+// Local deterministic estimate only. It includes a short access allowance and
+// a Perth urban route factor, then rounds up to a useful five-minute band.
+export function estimateDriveMinutes(distance: number): number {
+  return Math.max(5, Math.ceil((4 + distance * 1.55) / 5) * 5);
+}
+
 function ageScore(playground: Playground, ages: number[]): number {
   if (ages.length === 0) return 70;
   const coverage: number[] = ages.map((age) =>
@@ -139,10 +145,18 @@ function weightedScore(
   weather: WeatherContext | null,
 ): number {
   const weatherValue = weatherScore(playground, weather);
+  const travelDistance =
+    criteria.travelLimitMode === 'drive-time'
+      ? estimateDriveMinutes(distance)
+      : distance;
+  const travelLimit =
+    criteria.travelLimitMode === 'drive-time'
+      ? criteria.maxDriveMinutes
+      : criteria.radiusKm;
   const common = {
     age: ageScore(playground, criteria.ages),
     activity: activityScore(playground, criteria.preferences),
-    distance: distanceScore(distance, criteria.radiusKm),
+    distance: distanceScore(travelDistance, travelLimit),
     facilities: facilitiesScore(playground),
     party: partyFacilitiesScore(playground),
     accessibility: accessibilityScore(playground),
@@ -270,7 +284,12 @@ export function recommendPlaygrounds(
       distance: distanceKm(criteria.origin, playground.coordinates),
     }))
     .filter(({ playground, distance }) => {
-      if (criteria.mode !== 'explore' && distance > criteria.radiusKm) return false;
+      if (
+        criteria.mode !== 'explore' &&
+        (criteria.travelLimitMode === 'drive-time'
+          ? estimateDriveMinutes(distance) > criteria.maxDriveMinutes
+          : distance > criteria.radiusKm)
+      ) return false;
       return criteria.essentials.every(
         (key) => playground.facilities[key] === 'yes',
       );
@@ -281,6 +300,7 @@ export function recommendPlaygrounds(
         weightedScore(criteria, playground, distance, memories, weather),
       ),
       distanceKm: Math.round(distance * 10) / 10,
+      estimatedDriveMinutes: estimateDriveMinutes(distance),
       reasons: buildReasons(playground, criteria, weather),
       tradeoffs: buildTradeoffs(playground),
       evidenceWarning:

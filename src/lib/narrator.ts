@@ -31,6 +31,8 @@ export class RemoteNarrator implements RecommendationNarrator {
       mode: criteria.mode,
       ages: criteria.ages,
       radiusKm: criteria.radiusKm,
+      travelLimitMode: criteria.travelLimitMode,
+      maxDriveMinutes: criteria.maxDriveMinutes,
       essentials: criteria.essentials,
       preferences: criteria.preferences,
       candidates: recommendations.map((item) => ({

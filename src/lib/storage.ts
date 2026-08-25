@@ -63,6 +63,7 @@ export function loadCriteria(): Partial<SearchCriteria> {
     'wheels', 'sports', 'sand-play', 'sensory-play', 'flying-fox',
   ];
   const validRadii = [5, 10, 15, 25, 40];
+  const validDriveMinutes = [10, 20, 30, 45, 60];
 
   const valid =
     (candidate.mode === undefined || validModes.includes(candidate.mode as Mode)) &&
@@ -71,7 +72,9 @@ export function loadCriteria(): Partial<SearchCriteria> {
         candidate.ages.length <= 4 &&
         candidate.ages.every((age) => Number.isInteger(age) && Number(age) >= 1 && Number(age) <= 12))) &&
     (candidate.originLabel === undefined || typeof candidate.originLabel === 'string') &&
+    (candidate.travelLimitMode === undefined || ['distance', 'drive-time'].includes(candidate.travelLimitMode as string)) &&
     (candidate.radiusKm === undefined || validRadii.includes(candidate.radiusKm as number)) &&
+    (candidate.maxDriveMinutes === undefined || validDriveMinutes.includes(candidate.maxDriveMinutes as number)) &&
     (candidate.essentials === undefined ||
       (Array.isArray(candidate.essentials) &&
         candidate.essentials.every((item) => validFacilities.includes(item as FacilityKey)))) &&
