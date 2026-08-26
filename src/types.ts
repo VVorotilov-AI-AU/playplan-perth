@@ -138,9 +138,20 @@ export interface Recommendation {
   score: number;
   distanceKm: number;
   estimatedDriveMinutes: number;
+  estimatedDriveMinutesMin: number;
+  estimatedDriveMinutesMax: number;
   reasons: string[];
   tradeoffs: string[];
   evidenceWarning?: string;
+}
+
+export interface NearbyVerificationGap {
+  playground: Playground;
+  distanceKm: number;
+  estimatedDriveMinutesMin: number;
+  estimatedDriveMinutesMax: number;
+  missingEssentials: FacilityKey[];
+  confirmedEssentials: FacilityKey[];
 }
 
 export interface RecommendationNarrator {

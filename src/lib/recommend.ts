@@ -1,5 +1,7 @@
 import type {
   Activity,
+  FacilityKey,
+  NearbyVerificationGap,
   Playground,
   Recommendation,
   SearchCriteria,
@@ -29,6 +31,15 @@ export function distanceKm(
 // a Perth urban route factor, then rounds up to a useful five-minute band.
 export function estimateDriveMinutes(distance: number): number {
   return Math.max(5, Math.ceil((4 + distance * 1.55) / 5) * 5);
+}
+
+export function estimateDriveRange(distance: number): { min: number; max: number } {
+  const midpoint = estimateDriveMinutes(distance);
+  const margin = Math.max(5, Math.ceil((midpoint * 0.25) / 5) * 5);
+  return {
+    min: Math.max(5, midpoint - margin),
+    max: midpoint + margin,
+  };
 }
 
 function ageScore(playground: Playground, ages: number[]): number {
@@ -189,11 +200,11 @@ function weightedScore(
             [common.memory, 5],
           ]
         : [
-            [common.age, 35],
-            [common.activity, 20],
-            [common.distance, 15],
+            [common.age, 30],
+            [common.activity, 15],
+            [common.distance, 30],
             [common.facilities, 10],
-            [common.weather, 10],
+            [common.weather, 5],
             [common.memory, 10],
           ];
 
@@ -205,9 +216,7 @@ function weightedScore(
     (sum, [value, weight]) => sum + value * (weight / totalWeight),
     0,
   );
-  return playground.verificationMethod === 'ai-assisted-source-review'
-    ? score * 0.78
-    : score;
+  return score;
 }
 
 function buildReasons(
@@ -297,25 +306,71 @@ export function recommendPlaygrounds(
         (key) => playground.facilities[key] === 'yes',
       );
     })
-    .map(({ playground, distance }) => ({
-      playground,
-      score: Math.round(
-        weightedScore(criteria, playground, distance, memories, weather),
-      ),
-      distanceKm: Math.round(distance * 10) / 10,
-      estimatedDriveMinutes: estimateDriveMinutes(distance),
-      reasons: buildReasons(playground, criteria, weather),
-      tradeoffs: buildTradeoffs(playground),
-      evidenceWarning:
-        playground.verificationMethod === 'ai-assisted-source-review'
-          ? 'AI checked the identity, location and source. Unlisted age and facility details remain unconfirmed.'
-          : playground.status === 'check-before-visit'
-          ? 'Details may be changing. Check the official source before leaving.'
-          : undefined,
-    }))
+    .map(({ playground, distance }) => {
+      const driveRange = estimateDriveRange(distance);
+      return {
+        playground,
+        score: Math.round(
+          weightedScore(criteria, playground, distance, memories, weather),
+        ),
+        distanceKm: Math.round(distance * 10) / 10,
+        estimatedDriveMinutes: estimateDriveMinutes(distance),
+        estimatedDriveMinutesMin: driveRange.min,
+        estimatedDriveMinutesMax: driveRange.max,
+        reasons: buildReasons(playground, criteria, weather),
+        tradeoffs: buildTradeoffs(playground),
+        evidenceWarning:
+          playground.verificationMethod === 'ai-assisted-source-review'
+            ? 'AI checked the identity, location and source. Unlisted age and facility details remain unconfirmed.'
+            : playground.status === 'check-before-visit'
+            ? 'Details may be changing. Check the official source before leaving.'
+            : undefined,
+      };
+    })
     .sort(
       (a, b) =>
         b.score - a.score ||
+        a.distanceKm - b.distanceKm ||
+        a.playground.name.localeCompare(b.playground.name),
+    )
+    .slice(0, limit);
+}
+
+export function findNearbyVerificationGaps(
+  playgrounds: Playground[],
+  criteria: SearchCriteria,
+  limit = 3,
+): NearbyVerificationGap[] {
+  if (criteria.mode === 'explore' || criteria.essentials.length === 0) return [];
+
+  return playgrounds
+    .map((playground) => ({
+      playground,
+      distance: distanceKm(criteria.origin, playground.coordinates),
+    }))
+    .filter(({ playground, distance }) => {
+      if (distance > 10) return false;
+      const values = criteria.essentials.map((key) => playground.facilities[key]);
+      return values.includes('unknown') && !values.includes('no');
+    })
+    .map(({ playground, distance }) => {
+      const driveRange = estimateDriveRange(distance);
+      return {
+        playground,
+        distanceKm: Math.round(distance * 10) / 10,
+        estimatedDriveMinutesMin: driveRange.min,
+        estimatedDriveMinutesMax: driveRange.max,
+        missingEssentials: criteria.essentials.filter(
+          (key): key is FacilityKey => playground.facilities[key] === 'unknown',
+        ),
+        confirmedEssentials: criteria.essentials.filter(
+          (key): key is FacilityKey => playground.facilities[key] === 'yes',
+        ),
+      };
+    })
+    .sort(
+      (a, b) =>
+        a.missingEssentials.length - b.missingEssentials.length ||
         a.distanceKm - b.distanceKm ||
         a.playground.name.localeCompare(b.playground.name),
     )

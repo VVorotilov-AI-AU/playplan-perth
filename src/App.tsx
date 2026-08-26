@@ -35,7 +35,7 @@ import { playgroundCount, playgrounds } from './data/playgrounds';
 import { suburbDataSource, suburbs } from './data/suburbs';
 import { createNarrator } from './lib/narrator';
 import { restoreCriteria } from './lib/criteria';
-import { recommendPlaygrounds } from './lib/recommend';
+import { findNearbyVerificationGaps, recommendPlaygrounds } from './lib/recommend';
 import {
   loadCriteria,
   loadFavorites,
@@ -180,6 +180,10 @@ function hashPark(): Playground | null {
     : null;
 }
 
+function facilityLabel(key: FacilityKey): string {
+  return facilityOptions.find((item) => item.key === key)?.label ?? key;
+}
+
 function App() {
   const saved = loadCriteria();
   const [criteria, setCriteria] = useState<SearchCriteria>(() =>
@@ -230,6 +234,16 @@ function App() {
   }, [criteria, memories, sort, weather]);
 
   const showResults = searched || criteria.mode === 'explore';
+  const nearbyVerificationGaps = useMemo(
+    () => showResults
+      ? findNearbyVerificationGaps(playgrounds, criteria, 3)
+      : [],
+    [criteria, showResults],
+  );
+  const noNearbyVerifiedMatch =
+    criteria.mode !== 'explore' &&
+    recommendations.length > 0 &&
+    recommendations.every((item) => item.distanceKm > 10);
 
   useEffect(() => {
     function syncHash() {
@@ -432,7 +446,7 @@ function App() {
           <p className="hero-lede">
             Match Perth playgrounds to your children&apos;s ages, today&apos;s
             plan and the facilities your family actually needs. This growing
-            100-place showcase is not a complete directory of Perth playgrounds.
+            100+ place showcase is not a complete directory of Perth playgrounds.
           </p>
           <div className="trust-row">
             <span><ShieldCheck size={17} /> Evidence shown</span>
@@ -558,8 +572,8 @@ function App() {
                   </div>
                 </fieldset>
                 <fieldset className="travel-limit-column">
-                  <legend>By approximate drive</legend>
-                  <div className="radius-row" aria-label="Approximate drive-time limit">
+                  <legend>By rough drive area</legend>
+                  <div className="radius-row" aria-label="Rough drive-time search area">
                     {[10, 20, 30, 45, 60].map((minutes) => (
                       <button
                         key={minutes}
@@ -570,13 +584,13 @@ function App() {
                           setCriteria((current) => ({ ...current, travelLimitMode: 'drive-time', maxDriveMinutes: minutes }))
                         }
                       >
-                        ~{minutes} min
+                        ~{minutes} min area
                       </button>
                     ))}
                   </div>
                 </fieldset>
               </div>
-              <p className="distance-note">Choose one limit. Kilometres are straight-line. Drive time is a local estimate without live traffic. Google Maps provides the actual route.</p>
+              <p className="distance-note">Choose one search area. Kilometres are straight-line. Drive ranges are rough local estimates, not routes or live traffic. Google Maps provides the actual journey.</p>
             </div>
 
             <div className="field-block">
@@ -675,8 +689,10 @@ function App() {
                 {recommendations.length
                   ? criteria.mode === 'explore'
                     ? 'Explore the collection'
+                    : noNearbyVerifiedMatch
+                      ? `Verified matches, but none are near ${criteria.originLabel}`
                     : recommendations.length === 3
-                      ? `Three strong choices from ${criteria.originLabel}`
+                      ? `Three verified choices from ${criteria.originLabel}`
                       : `${recommendations.length} honest ${recommendations.length === 1 ? 'choice' : 'choices'} from ${criteria.originLabel}`
                   : 'Keep your essentials, widen the search'}
               </h2>
@@ -714,18 +730,28 @@ function App() {
             </div>
           )}
 
+          {noNearbyVerifiedMatch && (
+            <div className="distance-alert" role="status">
+              <Car size={20} />
+              <div>
+                <strong>No fully verified local match</strong>
+                <span>The nearest confirmed option is {Math.min(...recommendations.map((item) => item.distanceKm))} km away. Closer places with incomplete evidence are shown below.</span>
+              </div>
+            </div>
+          )}
+
           {recommendations.length === 0 ? (
             <div className="empty-state">
               <MapIcon size={42} />
               <h3>
                 No place within {criteria.travelLimitMode === 'drive-time'
-                  ? `about ${criteria.maxDriveMinutes} minutes by car`
+                  ? `the rough ${criteria.maxDriveMinutes}-minute search area`
                   : `${criteria.radiusKm} km`} confirms every essential.
               </h3>
               <p>
-                Try a wider radius or remove {criteria.essentials.length > 0
-                  ? facilityOptions.find((item) => item.key === criteria.essentials[0])?.label.toLowerCase()
-                  : 'one requirement'}. Unknown facilities are never treated as confirmed.
+                Nearby places may still exist, but unknown facilities are never treated as confirmed. Review the evidence gaps below or remove {criteria.essentials.length > 0
+                  ? facilityLabel(criteria.essentials[0]).toLowerCase()
+                  : 'one requirement'}.
               </p>
               <button
                 type="button"
@@ -734,27 +760,27 @@ function App() {
                   setCriteria((current) => ({
                     ...current,
                     radiusKm:
-                      current.travelLimitMode === 'distance' && current.radiusKm < 40
-                        ? 40
+                      current.travelLimitMode === 'distance' && current.radiusKm < 25
+                        ? 25
                         : current.radiusKm,
                     maxDriveMinutes:
-                      current.travelLimitMode === 'drive-time' && current.maxDriveMinutes < 60
-                        ? 60
+                      current.travelLimitMode === 'drive-time' && current.maxDriveMinutes < 30
+                        ? 30
                         : current.maxDriveMinutes,
                     essentials:
-                      (current.travelLimitMode === 'distance' && current.radiusKm < 40) ||
-                      (current.travelLimitMode === 'drive-time' && current.maxDriveMinutes < 60)
+                      (current.travelLimitMode === 'distance' && current.radiusKm < 25) ||
+                      (current.travelLimitMode === 'drive-time' && current.maxDriveMinutes < 30)
                         ? current.essentials
                         : current.essentials.slice(1),
                   }))
                 }
               >
-                {(criteria.travelLimitMode === 'distance' && criteria.radiusKm < 40) ||
-                (criteria.travelLimitMode === 'drive-time' && criteria.maxDriveMinutes < 60)
+                {(criteria.travelLimitMode === 'distance' && criteria.radiusKm < 25) ||
+                (criteria.travelLimitMode === 'drive-time' && criteria.maxDriveMinutes < 30)
                   ? criteria.travelLimitMode === 'drive-time'
-                    ? 'Expand to about 60 min'
-                    : 'Expand to 40 km'
-                  : `Remove ${facilityOptions.find((item) => item.key === criteria.essentials[0])?.label ?? 'one requirement'}`}
+                    ? 'Expand rough area to 30 min'
+                    : 'Expand to 25 km'
+                  : `Remove ${criteria.essentials.length > 0 ? facilityLabel(criteria.essentials[0]) : 'one requirement'}`}
               </button>
             </div>
           ) : (
@@ -793,6 +819,32 @@ function App() {
               </div>
             </div>
           )}
+
+
+          {criteria.mode !== 'explore' && nearbyVerificationGaps.length > 0 && (
+            <section className="nearby-evidence" aria-labelledby="nearby-evidence-title">
+              <div>
+                <p className="step-label">Nearby alternatives need checking</p>
+                <h3 id="nearby-evidence-title">Nearby, but not a confirmed match yet</h3>
+                <p>These nearby places have no known conflict with your essentials, but one or more required facilities still need a reliable source.</p>
+              </div>
+              <div className="nearby-evidence-grid">
+                {nearbyVerificationGaps.map((item) => (
+                  <article key={item.playground.id}>
+                    <span className="suburb-label">{item.playground.suburb} · {item.distanceKm} km · roughly {item.estimatedDriveMinutesMin}–{item.estimatedDriveMinutesMax} min</span>
+                    <h4>{item.playground.name}</h4>
+                    {item.confirmedEssentials.length > 0 && (
+                      <p className="confirmed-line"><Check size={15} /> Confirmed: {item.confirmedEssentials.map(facilityLabel).join(', ')}</p>
+                    )}
+                    <p className="missing-line"><Info size={15} /> Needs checking: {item.missingEssentials.map(facilityLabel).join(', ')}</p>
+                    <button type="button" className="text-button" onClick={() => openDetail(item.playground)}>
+                      Review evidence <ChevronRight size={17} />
+                    </button>
+                  </article>
+                ))}
+              </div>
+            </section>
+          )}
         </section>
       )}
 
@@ -810,7 +862,7 @@ function App() {
 
       <footer>
         <strong>PlayPlan Perth</strong>
-        <span>A growing 100-place showcase, not a complete Perth directory. Always check official details before you go.</span>
+        <span>A growing 100+ place showcase, not a complete Perth directory. Always check official details before you go.</span>
         <span>
           Suburbs: <a href={suburbDataSource.url} target="_blank" rel="noreferrer">Geoscape, CC BY 4.0</a> · Playground discovery: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a> · Weather: <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo</a> · Satellite map: <a href="https://www.arcgis.com/home/item.html?id=10df2279f9684e4a9f6a7f08febac2a9" target="_blank" rel="noreferrer">Esri World Imagery</a> · <a href="https://github.com/VVorotilov-AI-AU/playplan-perth/blob/main/LICENSE" target="_blank" rel="noreferrer">MIT licence</a>
         </span>
@@ -896,7 +948,7 @@ function ResultCard({
           <Heart size={20} fill={favorite ? 'currentColor' : 'none'} />
         </button>
       </div>
-      <p className="suburb-label">{park.suburb} · {item.distanceKm} km · ~{item.estimatedDriveMinutes} min drive</p>
+      <p className="suburb-label">{park.suburb} · {item.distanceKm} km · roughly {item.estimatedDriveMinutesMin}–{item.estimatedDriveMinutesMax} min</p>
       <span className={`verification-badge ${park.verificationMethod === 'ai-assisted-source-review' ? 'ai' : 'manual'}`}>
         <ShieldCheck size={14} />
         {park.verificationMethod === 'ai-assisted-source-review'

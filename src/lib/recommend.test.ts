@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { playgrounds } from '../data/playgrounds';
 import type { SearchCriteria, VisitMemory, WeatherContext } from '../types';
-import { distanceKm, estimateDriveMinutes, recommendPlaygrounds } from './recommend';
+import {
+  distanceKm,
+  estimateDriveMinutes,
+  estimateDriveRange,
+  findNearbyVerificationGaps,
+  recommendPlaygrounds,
+} from './recommend';
 
 const criteria: SearchCriteria = {
   mode: 'today',
@@ -137,7 +143,14 @@ describe('recommendation engine', () => {
     expect(result.every((item) => item.estimatedDriveMinutes <= 10)).toBe(true);
   });
 
-  it('keeps AI-assisted candidates below an otherwise identical facility-reviewed place', () => {
+  it('shows a bounded drive range instead of presenting the estimate as a route time', () => {
+    expect(estimateDriveRange(10)).toEqual({ min: 15, max: 25 });
+    const result = recommendPlaygrounds(playgrounds, { ...criteria, essentials: [] });
+    expect(result.every((item) => item.estimatedDriveMinutesMin <= item.estimatedDriveMinutes)).toBe(true);
+    expect(result.every((item) => item.estimatedDriveMinutesMax >= item.estimatedDriveMinutes)).toBe(true);
+  });
+
+  it('does not apply a blanket quality penalty after essentials pass evidence gates', () => {
     const manual = playgrounds.find(
       (item) => item.verificationMethod === 'manual-source-review',
     )!;
@@ -154,10 +167,25 @@ describe('recommendation engine', () => {
       null,
       2,
     );
-    expect(result.map((item) => item.playground.id)).toEqual([
-      manual.id,
-      assisted.id,
-    ]);
+    expect(result).toHaveLength(2);
+    expect(result[0].score).toBe(result[1].score);
+  });
+
+  it('surfaces nearby candidates with unknown essentials without calling them matches', () => {
+    const source = playgrounds[0];
+    const candidate = {
+      ...source,
+      id: 'nearby-evidence-gap',
+      name: 'Nearby evidence gap',
+      facilities: { ...source.facilities, bbq: 'unknown' as const, toilets: 'yes' as const },
+    };
+    const gaps = findNearbyVerificationGaps(
+      [candidate],
+      { ...criteria, origin: candidate.coordinates, essentials: ['bbq', 'toilets'] },
+    );
+    expect(gaps).toHaveLength(1);
+    expect(gaps[0].missingEssentials).toEqual(['bbq']);
+    expect(gaps[0].confirmedEssentials).toEqual(['toilets']);
   });
 
   it('lets explore browse the full curated collection', () => {

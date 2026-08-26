@@ -11,7 +11,7 @@ test('primary flow returns explainable recommendations', async ({ page }) => {
   await page.goto('/playplan-perth/#/today');
   await expect(page.getByRole('heading', { name: 'Pick a park everyone loves.' })).toBeVisible();
   await page.getByRole('button', { name: /Find our best three/ }).click();
-  await expect(page.getByRole('heading', { name: /Three strong choices/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Three verified choices/ })).toBeVisible();
   await expect(page.locator('.result-card')).toHaveCount(3);
   await expect(page.getByText('Weather unavailable, ranking still works')).toBeVisible();
 });
@@ -69,7 +69,7 @@ test('party and explore modes expose their complete journeys', async ({ page }) 
   await expect(page.getByRole('button', { name: 'BBQ on site' })).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('tab', { name: /Explore Perth/ }).click();
   await expect(page.getByRole('heading', { name: 'Explore the collection' })).toBeVisible();
-  await expect(page.locator('.result-card')).toHaveCount(100);
+  expect(await page.locator('.result-card').count()).toBeGreaterThanOrEqual(100);
   await expect(page.getByText(/not a complete directory/i).first()).toBeVisible();
 });
 
@@ -123,10 +123,25 @@ test('suburb search suggests matches as the parent types', async ({ page }) => {
 test('drive-time mode filters and labels recommendations honestly', async ({ page }) => {
   await page.route('https://api.open-meteo.com/**', (route) => route.abort());
   await page.goto('/playplan-perth/#/today');
-  await page.getByRole('button', { name: '~30 min' }).click();
+  await page.getByRole('button', { name: '~30 min area' }).click();
   await page.getByRole('button', { name: /Find our best three/ }).click();
-  await expect(page.locator('.result-card').first()).toContainText(/~\d+ min drive/);
-  await expect(page.getByText(/without live traffic/)).toBeVisible();
+  await expect(page.locator('.result-card').first()).toContainText(/roughly \d+–\d+ min/);
+  await expect(page.getByText(/not routes or live traffic/)).toBeVisible();
+});
+
+test('Cottesloe strict search returns a verified local place', async ({ page }) => {
+  await page.route('https://api.open-meteo.com/**', (route) => route.abort());
+  await page.goto('/playplan-perth/#/today');
+  const search = page.getByLabel('Starting suburb');
+  await search.fill('Cottesloe');
+  await page.getByRole('option', { name: 'Cottesloe' }).click();
+  for (const name of ['Shade', 'Toilets', 'BBQ on site', 'Fenced']) {
+    const button = page.getByRole('button', { name });
+    if ((await button.getAttribute('aria-pressed')) !== 'true') await button.click();
+  }
+  await page.getByRole('button', { name: /Find our best three/ }).click();
+  await expect(page.locator('.result-card').first()).toContainText('Cottesloe Civic Centre Playground');
+  await expect(page.locator('.result-card').first()).toContainText(/Cottesloe · \d+(\.\d)? km/);
 });
 
 test('place buttons identify the playground and the satellite map is attributed', async ({ page }) => {

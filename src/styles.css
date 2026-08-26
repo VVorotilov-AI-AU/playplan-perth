@@ -153,6 +153,11 @@ a[href$="leafletjs.com"] { color:#004a64!important; text-decoration:underline!im
 .empty-state { max-width:720px; margin:auto; padding:48px 25px; border:1px dashed #96ac9f; border-radius:25px; background:rgba(255,255,255,.58); text-align:center; }
 .empty-state svg { color:var(--green); }.empty-state h3 { font-size:24px; }.empty-state p { color:var(--muted); }
 .limit-note { padding:14px; border-radius:14px; background:#fff8e0; }
+.distance-alert { max-width:1300px; margin:0 auto 18px; display:flex; align-items:flex-start; gap:10px; padding:14px 16px; border:1px solid #dfb957; border-radius:16px; background:#fff6d9; color:#654b17; }
+.distance-alert svg { flex:0 0 auto; margin-top:2px; }.distance-alert strong,.distance-alert span { display:block; }.distance-alert span { margin-top:3px; font-size:13px; line-height:1.45; }
+.nearby-evidence { max-width:1300px; margin:26px auto 0; padding:22px; border:1px solid #c7d5ce; border-radius:22px; background:rgba(255,255,255,.58); }
+.nearby-evidence>div:first-child>h3 { margin:5px 0 6px; color:var(--green-dark); font-family:Georgia,serif; font-size:25px; }.nearby-evidence>div:first-child>p:last-child { max-width:760px; margin:0; color:var(--muted); line-height:1.5; }
+.nearby-evidence-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-top:17px; }.nearby-evidence-grid article { display:flex; flex-direction:column; align-items:flex-start; min-width:0; padding:16px; border:1px solid var(--line); border-radius:16px; background:var(--paper); }.nearby-evidence-grid h4 { margin:8px 0 10px; color:var(--green-dark); font-family:Georgia,serif; font-size:20px; }.nearby-evidence-grid p { display:flex; align-items:flex-start; gap:6px; margin:4px 0; font-size:12px; line-height:1.4; }.nearby-evidence-grid p svg { flex:0 0 auto; margin-top:1px; }.confirmed-line { color:var(--green); }.missing-line { color:#7a5318; }.nearby-evidence-grid .text-button { margin-top:auto; padding-top:10px; }
 
 .method-section { display:flex; justify-content:space-between; gap:40px; max-width:1440px; margin:auto; }
 .method-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:13px; max-width:790px; }
@@ -190,6 +195,7 @@ footer a { color:white; }
 
 @media (max-width: 900px) {
   .planner-grid,.results-grid { grid-template-columns:1fr; }
+  .nearby-evidence-grid { grid-template-columns:1fr; }
   .privacy-card,.map-column { position:static; }
   .privacy-card { display:grid; grid-template-columns:160px 1fr; column-gap:20px; }
   .privacy-art { grid-row:1/4; height:auto; min-height:230px; margin:-22px 0 -22px -22px; }

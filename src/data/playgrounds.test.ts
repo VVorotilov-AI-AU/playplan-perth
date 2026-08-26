@@ -4,7 +4,7 @@ import { playgrounds } from './playgrounds';
 
 describe('playground dataset', () => {
   it('contains the planned curated coverage', () => {
-    expect(playgrounds).toHaveLength(100);
+    expect(playgrounds.length).toBeGreaterThanOrEqual(100);
   });
 
   it('validates every record and keeps identifiers unique', () => {
